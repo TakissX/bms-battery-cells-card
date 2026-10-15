@@ -1,5 +1,6 @@
 import de from './lang-de.js';
 import en from './lang-en.js';
+import gr from './lang-gr.js';
 import './chart.umd.min.js';
 
 // Helper um LitElement sicher zu laden
