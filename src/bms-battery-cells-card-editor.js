@@ -1,5 +1,6 @@
 import de from './lang-de.js';
 import en from './lang-en.js';
+import gr from './lang-gr.js';
 
 // Helper to make sure LitElement is loaded
 const LitElement = customElements.get("ha-lit-element") || Object.getPrototypeOf(customElements.get("home-assistant-main"));
