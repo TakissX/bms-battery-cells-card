@@ -18,7 +18,7 @@ const switchSelector = { entity: { domain: ["switch", "input_boolean", "input_se
 class BmsBatteryCellsCardEditor extends LitElement {
   constructor() {
     super();
-    this.langs = { de, en };
+    this.langs = { de, en, gr, el: gr };
   }
 
   static get properties() {
