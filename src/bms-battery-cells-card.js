@@ -364,6 +364,17 @@ class BmsBatteryCellsCard extends HTMLElement {
 
     set hass(hass) {
         this._hass = hass;
+		// Αν το title είναι κενό, βάλε default ανάλογα με τη γλώσσα
+        if (this._config && !this._config.title) {
+            const lang = hass?.locale?.language || 'en';
+            const code = lang.split('-')[0];
+            const defaultTitles = {
+                el: "Στοιχεία Μπαταρίας",
+                en: "Battery Cells",
+                de: "Batterie Zellen"
+            };
+            this._config.title = defaultTitles[code] || defaultTitles['en'];
+        }
         if (!this._initialized) {
             this._initRender();
         }
@@ -373,7 +384,7 @@ class BmsBatteryCellsCard extends HTMLElement {
     setConfig(config) {
         if (!config) throw new Error("Invalid configuration");
         this._config = {
-            title: "Batterie Zellen",
+            title: "",
             show_legend: true,
             container_padding: 16,
             card_height: 380,
