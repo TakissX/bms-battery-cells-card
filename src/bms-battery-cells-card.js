@@ -343,8 +343,9 @@ class BmsBatteryCellsCard extends HTMLElement {
         
         if (de && de.card && !de.card.min_cell) de.card.min_cell = "Min Zelle";
         if (en && en.card && !en.card.min_cell) en.card.min_cell = "Min Cell";
+		if (gr && gr.card && !gr.card.min_cell) gr.card.min_cell = "Ελάχιστο Στοιχείο";
         
-        this.langs = { de, en };
+        this.langs = { de, en, gr, el: gr };
         this.chartVoltage = null;
         this.chartDelta = null;
     }
