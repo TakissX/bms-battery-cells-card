@@ -153,7 +153,7 @@ Although UI configuration is recommended, the map can also be configured manuall
 | name                      | type      | required | description                                                        | default             |
 | ------------------------- | --------- | -------- | ------------------------------------------------------------------ | ------------------- |
 | `type`                    | `string`  | Yes      | Card type definition. Must be `custom:bms-battery-cells-card`.     |                     |
-| `title`                   | `string`  | No       | Title displayed at the top of the card.                            | `"Batterie Zellen"` |
+| `title`                   | `string`  | No       | Title displayed at the top of the card.                            |Automatically in the Home Assistant language: "en, de, and gr"|
 | `cells`                   | `list`    | Yes      | List of cell definitions (entity + name).                          | 4 example cells     |
 | `cells[].entity`          | `string`  | Yes      | Sensor entity representing the cell voltage.                       |                     |
 | `cells[].name`            | `string`  | No       | Display name of the cell.                                          | Cell index          |
