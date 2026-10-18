@@ -510,16 +510,20 @@ class BmsBatteryCellsCard extends HTMLElement {
     }
 
     async _initCharts() {
+        if (this._config.show_charts === false) return;
+        
         setTimeout(async () => {
             const cv = this.shadowRoot.getElementById('canvas-voltage');
             const cd = this.shadowRoot.getElementById('canvas-delta');
-            if (cv && this._config.total_voltage_entity && !this.chartVoltage) {
+            
+            if (cv && this._config.total_voltage_entity) {
                 const dataV = await this._fetchHistory(this._config.total_voltage_entity, 6);
                 this.chartVoltage = this._createChart(cv, dataV, '#ffa726', 'V');
             }
-            if (cd && this._config.cell_diff_sensor && !this.chartDelta) {
+            
+            if (cd && this._config.cell_diff_sensor) {
                 let dataD = await this._fetchHistory(this._config.cell_diff_sensor, 6);
-                this.chartDelta = this._createChart(cd, dataD, '#1e88e5', ''); 
+                this.chartDelta = this._createChart(cd, dataD, '#1e88e5', '');
             }
         }, 200);
     }
@@ -527,9 +531,16 @@ class BmsBatteryCellsCard extends HTMLElement {
     _createChart(ctx, data, color, unit = '') {
         const ChartLib = window.Chart || Chart;
         if (!ChartLib) return null;
+
+        // ΡΙΖΙΚΗ ΛΥΣΗ: Έλεγχος αν το canvas έχει ήδη γράφημα από προηγούμενο render
+        const existingChart = ChartLib.getChart(ctx);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+
         const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 100);
-        gradient.addColorStop(0, color + '66'); 
-        gradient.addColorStop(1, color + '00'); 
+        gradient.addColorStop(0, color + '66');
+        gradient.addColorStop(1, color + '00');
 
         return new ChartLib(ctx, {
             type: 'line',
@@ -550,22 +561,22 @@ class BmsBatteryCellsCard extends HTMLElement {
                 maintainAspectRatio: false,
                 animation: false,
                 layout: { padding: 0 },
-                plugins: { 
-                    legend: { display: false }, 
-                    tooltip: { 
-                        enabled: true, 
-                        mode: 'index', 
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
                         intersect: false,
                         displayColors: false,
                         callbacks: {
-                            title: () => [], 
+                            title: () => [],
                             label: (context) => {
                                 let val = context.parsed.y;
                                 const decimals = (val < 10 && val > -10) ? 3 : 2;
                                 return val.toFixed(decimals) + (unit ? ' ' + unit : '');
                             }
                         }
-                    } 
+                    }
                 },
                 scales: { x: { type: 'linear', display: false }, y: { display: false } },
                 interaction: { mode: 'nearest', axis: 'x', intersect: false }
