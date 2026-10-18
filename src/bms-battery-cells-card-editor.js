@@ -2,10 +2,10 @@ import de from './lang-de.js';
 import en from './lang-en.js';
 import gr from './lang-gr.js';
 
-// Helper to make sure LitElement is loaded
-const LitElement = customElements.get("ha-lit-element") || Object.getPrototypeOf(customElements.get("home-assistant-main"));
-const html = LitElement.prototype.html;
-const css = LitElement.prototype.css;
+// Σωστή και ασφαλής αρχειοθέτηση του LitElement (Συμβατό με Home Assistant 2026+)
+const LitElement = customElements.get("ha-lit-element") || customElements.get("hui-view")?.constructor || (customElements.get("ha-panel-lovelace") ? Object.getPrototypeOf(customElements.get("ha-panel-lovelace")) : null) || HTMLElement;
+const html = LitElement.prototype?.html || window.LitHtml?.html || (window.lit && window.lit.html);
+const css = LitElement.prototype?.css || window.LitHtml?.css || (window.lit && window.lit.css);
 
 const ICON_CLOSE = "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z";
 
