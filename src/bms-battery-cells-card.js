@@ -584,12 +584,16 @@ class BmsBatteryCellsCard extends HTMLElement {
         });
     }
 
-    _updateChartData(chart, timestamp, value) {
-        if (!chart) return;
-        const data = chart.data.datasets[0].data;
-        data.push({ x: timestamp, y: value });
+_updateChartData(chart, timestamp, value) {
+        if (!chart || !chart.data || !chart.data.datasets || !chart.data.datasets[0]) return;
+        const chartData = chart.data.datasets[0].data;
+        if (!chartData) return;
+
+        chartData.push({ x: timestamp, y: value });
         const cutoff = timestamp - (6 * 60 * 60 * 1000);
-        while(data.length > 0 && data[0].x < cutoff) { data.shift(); }
+        while(chartData.length > 0 && chartData[0].x < cutoff) { 
+            chartData.shift(); 
+        }
         chart.update('none');
     }
 
