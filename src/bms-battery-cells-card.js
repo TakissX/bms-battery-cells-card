@@ -1,4 +1,3 @@
-@@ -1,1422 +1,1433 @@
 import de from './lang-de.js';
 import en from './lang-en.js';
 import gr from './lang-gr.js';
