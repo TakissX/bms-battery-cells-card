@@ -1,3 +1,4 @@
+@@ -1,1422 +1,1433 @@
 import de from './lang-de.js';
 import en from './lang-en.js';
 import gr from './lang-gr.js';
@@ -340,11 +341,11 @@ class BmsBatteryCellsCard extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this._initialized = false;
-        
+
         if (de && de.card && !de.card.min_cell) de.card.min_cell = "Min Zelle";
         if (en && en.card && !en.card.min_cell) en.card.min_cell = "Min Cell";
 		if (gr && gr.card && !gr.card.min_cell) gr.card.min_cell = "Ελάχιστο Στοιχείο";
-        
+
         this.langs = { de, en, gr, el: gr };
         this.chartVoltage = null;
         this.chartDelta = null;
@@ -457,9 +458,9 @@ class BmsBatteryCellsCard extends HTMLElement {
         if (!this._hass || !entityId) return;
         const stateObj = this._hass.states[entityId];
         if (!stateObj) return;
-        
+
         const domain = entityId.split('.')[0];
-        
+
         // Handle switches, input_booleans, lights
         if (domain === 'switch' || domain === 'input_boolean' || domain === 'light') {
             this._hass.callService("homeassistant", "toggle", { entity_id: entityId });
@@ -471,14 +472,14 @@ class BmsBatteryCellsCard extends HTMLElement {
             const current = String(stateObj.state).trim();
             const targetOn = customOn && String(customOn).trim() !== '' ? String(customOn).trim() : 'on';
             const targetOff = customOff && String(customOff).trim() !== '' ? String(customOff).trim() : 'off';
-            
+
             // Logic: If current is targetOn, switch to targetOff, else switch to targetOn
             const isCurrentOn = current.toLowerCase() === targetOn.toLowerCase();
             const nextOption = isCurrentOn ? targetOff : targetOn;
-            
+
             // Correct service call based on domain
             const serviceDomain = domain === 'select' ? 'select' : 'input_select';
-            
+
             this._hass.callService(serviceDomain, "select_option", { entity_id: entityId, option: nextOption });
         }
     }
@@ -510,20 +511,20 @@ class BmsBatteryCellsCard extends HTMLElement {
     }
 
     async _initCharts() {
-        if (this._config.show_charts === false) return;
-        
+
+
         setTimeout(async () => {
             const cv = this.shadowRoot.getElementById('canvas-voltage');
             const cd = this.shadowRoot.getElementById('canvas-delta');
-            
-            if (cv && this._config.total_voltage_entity) {
+            if (cv && this._config.total_voltage_entity && !this.chartVoltage) {
+
                 const dataV = await this._fetchHistory(this._config.total_voltage_entity, 6);
                 this.chartVoltage = this._createChart(cv, dataV, '#ffa726', 'V');
             }
-            
-            if (cd && this._config.cell_diff_sensor) {
+            if (cd && this._config.cell_diff_sensor && !this.chartDelta) {
+
                 let dataD = await this._fetchHistory(this._config.cell_diff_sensor, 6);
-                this.chartDelta = this._createChart(cd, dataD, '#1e88e5', '');
+                this.chartDelta = this._createChart(cd, dataD, '#1e88e5', ''); 
             }
         }, 200);
     }
@@ -532,15 +533,15 @@ class BmsBatteryCellsCard extends HTMLElement {
         const ChartLib = window.Chart || Chart;
         if (!ChartLib) return null;
 
-        // ΡΙΖΙΚΗ ΛΥΣΗ: Έλεγχος αν το canvas έχει ήδη γράφημα από προηγούμενο render
-        const existingChart = ChartLib.getChart(ctx);
-        if (existingChart) {
-            existingChart.destroy();
-        }
+
+
+
+
+
 
         const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 100);
-        gradient.addColorStop(0, color + '66');
-        gradient.addColorStop(1, color + '00');
+        gradient.addColorStop(0, color + '66'); 
+        gradient.addColorStop(1, color + '00'); 
 
         return new ChartLib(ctx, {
             type: 'line',
@@ -561,22 +562,22 @@ class BmsBatteryCellsCard extends HTMLElement {
                 maintainAspectRatio: false,
                 animation: false,
                 layout: { padding: 0 },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        enabled: true,
-                        mode: 'index',
+                plugins: { 
+                    legend: { display: false }, 
+                    tooltip: { 
+                        enabled: true, 
+                        mode: 'index', 
                         intersect: false,
                         displayColors: false,
                         callbacks: {
-                            title: () => [],
+                            title: () => [], 
                             label: (context) => {
                                 let val = context.parsed.y;
                                 const decimals = (val < 10 && val > -10) ? 3 : 2;
                                 return val.toFixed(decimals) + (unit ? ' ' + unit : '');
                             }
                         }
-                    }
+                    } 
                 },
                 scales: { x: { type: 'linear', display: false }, y: { display: false } },
                 interaction: { mode: 'nearest', axis: 'x', intersect: false }
@@ -584,16 +585,12 @@ class BmsBatteryCellsCard extends HTMLElement {
         });
     }
 
-_updateChartData(chart, timestamp, value) {
-        if (!chart || !chart.data || !chart.data.datasets || !chart.data.datasets[0]) return;
-        const chartData = chart.data.datasets[0].data;
-        if (!chartData) return;
-
-        chartData.push({ x: timestamp, y: value });
+    _updateChartData(chart, timestamp, value) {
+        if (!chart) return;
+        const data = chart.data.datasets[0].data;
+        data.push({ x: timestamp, y: value });
         const cutoff = timestamp - (6 * 60 * 60 * 1000);
-        while(chartData.length > 0 && chartData[0].x < cutoff) { 
-            chartData.shift(); 
-        }
+        while(data.length > 0 && data[0].x < cutoff) { data.shift(); }
         chart.update('none');
     }
 
@@ -685,13 +682,13 @@ _updateChartData(chart, timestamp, value) {
 
     _updateStandardValues() {
         const { cells = [], watt_entity, soc_entity, cell_diff_sensor, temp_entity, total_voltage_entity, total_current_entity, show_values, show_values_on_top, show_min_max, min_voltage, max_voltage, horizontal_layout, show_voltage_diff, show_average, hide_bars, show_as_table, cell_bar_color, cell_bar_top_color, cell_bar_bottom_color } = this._config;
-        
+
         const rowClass = show_values_on_top ? 'stat-value-row vertical-layout' : 'stat-value-row';
 
         const wattVal = this._parseNumber(watt_entity);
         const isCharging = (this._config.enable_animations !== false) && (wattVal !== null && wattVal > 0);
         const isDischarging = (this._config.enable_animations !== false) && (wattVal !== null && wattVal < 0);
-        
+
         let minV = 999, maxV = -999, minIdx = -1, maxIdx = -1, cellValues = [];
         cells.forEach((cell, index) => {
             const val = this._parseNumber(cell.entity);
@@ -732,7 +729,7 @@ _updateChartData(chart, timestamp, value) {
                     el.onclick = (e) => { e.stopPropagation(); this._fireMoreInfo(total_voltage_entity); };
                 });
             } else idx += removeElement(subInfoContainer, 'sub-volt');
-            
+
             if (total_current_entity && iTotal !== null) {
                 idx += updateElement(subInfoContainer, 'sub-curr', idx, (el) => {
                     el.className = 'sub-info-item';
@@ -741,7 +738,7 @@ _updateChartData(chart, timestamp, value) {
                     el.onclick = (e) => { e.stopPropagation(); this._fireMoreInfo(total_current_entity); };
                 });
             } else idx += removeElement(subInfoContainer, 'sub-curr');
-            
+
             if (temp_entity && temp !== null) {
                 idx += updateElement(subInfoContainer, 'sub-temp', idx, (el) => {
                     el.className = 'sub-info-item';
@@ -761,7 +758,7 @@ _updateChartData(chart, timestamp, value) {
             const socValRaw = this._parseNumber(soc_entity);
             let diffVal = this._parseNumber(cell_diff_sensor);
             if (diffVal !== null && diffVal < 1) diffVal *= 1000;
-            
+
             let idx = 0;
             const updateElement = (container, id, index, renderFn) => {
                 let el = container.querySelector(`#${id}`);
@@ -794,11 +791,11 @@ _updateChartData(chart, timestamp, value) {
                     el.onclick = (e) => { e.stopPropagation(); this._fireMoreInfo(soc_entity); };
                 });
             } else idx += removeElement(statsContainer, 'stat-soc');
-            
+
             let deltaContent = null;
             let deltaEntity = null;
             let deltaColor = '';
-            
+
             if (cell_diff_sensor && diffVal !== null) {
                 deltaEntity = cell_diff_sensor;
                 deltaColor = (diffVal > 20) ? '#ef5350' : '#66bb6a';
@@ -822,7 +819,7 @@ _updateChartData(chart, timestamp, value) {
                     }
                 });
             } else idx += removeElement(statsContainer, 'stat-delta');
-            
+
             if (show_average) {
                 idx += updateElement(statsContainer, 'stat-avg', idx, (el) => {
                     el.className = 'stat-item';
@@ -842,7 +839,7 @@ _updateChartData(chart, timestamp, value) {
             cells.forEach((cell, index) => {
                 const item = this.shadowRoot.getElementById(`table-item-${index}`);
                 const valLabel = this.shadowRoot.getElementById(`table-val-${index}`);
-                
+
                 if (item && valLabel) {
                     const displayValNum = cellValues[index] || 0;
                     const displayVal = displayValNum > 0 ? `${displayValNum.toFixed(3)} V` : '-';
@@ -872,17 +869,17 @@ _updateChartData(chart, timestamp, value) {
             const valLabel = this.shadowRoot.getElementById(`val-${index}`);
             const wrapper = this.shadowRoot.getElementById(`cell-wrap-${index}`);
             const tooltip = this.shadowRoot.getElementById(`tooltip-${index}`);
-            
+
             if (bar && valLabel && wrapper) {
                 const displayValNum = cellValues[index] || 0;
                 const displayVal = displayValNum > 0 ? `${displayValNum.toFixed(3)} V` : '-';
-                
+
                 wrapper.classList.remove('min-cell', 'max-cell');
                 if (show_min_max && displayValNum > 0) {
                     if (index === minIdx) wrapper.classList.add('min-cell');
                     if (index === maxIdx) wrapper.classList.add('max-cell');
                 }
-                
+
                 let pct = 0;
                 if (displayValNum > 0) {
                     if (displayValNum <= mapPoints[0]) pct = 0; else if (displayValNum >= mapPoints[7]) pct = 100;
@@ -896,7 +893,7 @@ _updateChartData(chart, timestamp, value) {
                         }
                     }
                 }
-                
+
                 // --- COLOR LOGIC ---
                 let color = '#363694'; // DEBUG Default
                 if (cell_bar_color === 'delta') { // Dynamic Color based on delta
@@ -916,7 +913,7 @@ _updateChartData(chart, timestamp, value) {
                     color = cell_bar_color;
                 }
                 bar.style.background = color;
-                
+
                 // --- BAR SIZE LOGIC ---
                 if (horizontal_layout) {
                     bar.style.width = `${pct}%`;
@@ -932,7 +929,7 @@ _updateChartData(chart, timestamp, value) {
                 bar.classList.remove('is-charging', 'is-discharging');
                 if      (isCharging)    bar.classList.add('is-charging');
                 else if (isDischarging) bar.classList.add('is-discharging');
-                
+
                 // --- VALUE LOGIC ---
                 valLabel.innerText = displayVal;
                 if (tooltip) tooltip.innerText = displayVal;
@@ -943,14 +940,14 @@ _updateChartData(chart, timestamp, value) {
     // DETAILED VIEW (Dashboard)
     // =========================================================================
     _renderDetailedView() {
-        
+
         const { cells = [], show_cell_list, show_charts, show_standard_in_detail, card_height, cell_gap, show_values, min_voltage, max_voltage, thicker_borders, hide_bars, horizontal_layout, show_as_table, cell_bar_opacity, cell_background_opacity } = this._config;
         const colors = this._getColors();
-        
+
         // --- LOGIK FÜR STANDARD ANSICHT KOPIEREN (falls aktiviert) ---
         let standardCss = '';
         let standardHtml = '';
-        
+
         if (show_standard_in_detail) {
              const cellCount = cells.length;
              let valDisplay = show_values ? 'inline-block' : 'none';
@@ -964,7 +961,7 @@ _updateChartData(chart, timestamp, value) {
                  for (let i = 0; i <= 7; i++) mapPoints.push(Math.round((min_voltage + (step * i)) * 1000) / 1000);
              }
              let scaleLabels = horizontal_layout ? [...mapPoints].map(v=>v.toFixed(2)+'V') : [...mapPoints].reverse().map(v=>v.toFixed(2)+'V');
-             
+
              standardCss = `
                 .standard-view-wrapper {
                     display: block; margin-top: 0px; 
@@ -996,7 +993,7 @@ _updateChartData(chart, timestamp, value) {
                 .cell-val-badge.cell-voltage { background: var(--badge-bg-color); color: #fff; padding: 4px 10px; font-size: 13px; border-radius: 12px; font-weight: 700; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); display: var(--val-display); white-space: nowrap; }
                 .legend-col { display: flex; flex-direction: var(--legend-direction); justify-content: var(--legend-align); ${horizontal_layout ? 'width: 100%; height: 20px; border-top: var(--legend-border-top); padding-top: 2px;' : 'height: 100%; padding-right: 8px; margin-right: 4px; border-right: var(--legend-border); min-width: 40px;'} font-size: 11px; color: var(--secondary-text-color); text-align: right; font-weight: 500; }
              `;
-             
+
             if (show_as_table) {
                 standardHtml = `<div class="standard-view-wrapper"><div class="table-container">${cells.map((cell, index) => `<div class="table-item" id="table-item-${index}"><span class="table-name">${cell.name || (index + 1)}</span><span class="table-val" id="table-val-${index}">-</span></div>`).join('')}</div></div>`;
             } 
@@ -1164,7 +1161,7 @@ _updateChartData(chart, timestamp, value) {
                 this._fireMoreInfo(target.dataset.entity);
             }
         });
-        
+
         if (show_standard_in_detail) {
             this._setupTooltips();
         }
@@ -1183,7 +1180,7 @@ _updateChartData(chart, timestamp, value) {
                 this._handleSwitchAction(this._config.stat_balance_entity, this._config.stat_balance_on, this._config.stat_balance_off);
              }
         });
-        
+
         this._initCharts();
     }
 
@@ -1206,27 +1203,27 @@ _updateChartData(chart, timestamp, value) {
         // Clamp + normalize
         const t = max === min ? 0 : (value - min) / (max - min);
         const clamped = Math.min(1, Math.max(0, t));
-      
+
         // Convert hex → RGB
         const c1 = this._hexToRgb(bottom);
         const c2 = this._hexToRgb(top);
-      
+
         // Interpolate channels
         const r = Math.round(c1.r + (c2.r - c1.r) * clamped);
         const g = Math.round(c1.g + (c2.g - c1.g) * clamped);
         const b = Math.round(c1.b + (c2.b - c1.b) * clamped);
-      
+
         //console.log('Lerp Color:', { value, min, max, t, clamped, c1, c2, r, g, b });
 
         return `rgb(${r}, ${g}, ${b})`;
     }
-      
+
     _hexToRgb(hex) {
         const clean = hex.replace('#', '');
         const bigint = parseInt(clean.length === 3
           ? clean.split('').map(c => c + c).join('')
           : clean, 16);
-      
+
         return {
           r: (bigint >> 16) & 255,
           g: (bigint >> 8) & 255,
@@ -1267,9 +1264,9 @@ _updateChartData(chart, timestamp, value) {
         const delta  = this._parseNumber(c.cell_diff_sensor);
         const soc    = this._parseNumber(c.soc_entity);
         const soh    = this._parseNumber(c.soh_entity);
-        
+
         const leftList = []; const rightList = [];
-        
+
         const addIfConf = (list, confKey, labelKey, unit, isTemp=false, fixed=null) => {
             if (!c[confKey]) return; 
             let val = this._parseNumber(c[confKey]);
@@ -1281,10 +1278,10 @@ _updateChartData(chart, timestamp, value) {
             const cls = isTemp ? 'detail-val-txt temp' : 'detail-val-txt';
             list.push(`<div class="detail-item clickable" data-entity="${c[confKey]}"><span class="detail-label">${this._localize(labelKey)} :</span><span class="${cls}">${valStr}</span></div>`);
         };
-		
+
         addIfConf(leftList, 'capacity_entity', 'card.batt_capacity', 'Ah', false, 0);
         addIfConf(leftList, 'cycle_capacity_entity', 'card.cycle_capacity', 'Ah', false, 0);
-        
+
         // --- Calculate Min/Max and Sum ---
         let cellSum = 0; let cellCnt = 0; let minV = 999; let maxV = -999; let minIdx = -1; let maxIdx = -1; 
         c.cells.forEach((cell, i) => {
@@ -1298,9 +1295,9 @@ _updateChartData(chart, timestamp, value) {
         });
         const avgVal = cellCnt > 0 ? (cellSum / cellCnt).toFixed(3) + ' V' : '--';
         leftList.push(`<div class="detail-item"><span class="detail-label">${this._localize('card.avg_cell')} :</span><span class="detail-val-txt">${avgVal}</span></div>`);
-        
+
         addIfConf(leftList, 'temp_entity', 'editor.temp', '°C', true, 1);
-        
+
         if (c.capacity_entity && c.soc_entity) {
             const cap = this._parseNumber(c.capacity_entity);
             if(cap && soc !== null) {
@@ -1309,7 +1306,7 @@ _updateChartData(chart, timestamp, value) {
             }
         }
         addIfConf(rightList, 'cycle_count_entity', 'card.cycle_count', '');
-        
+
         let deltaDisplay = delta;
         if (delta === null && maxV > 0 && minV < 999) deltaDisplay = (maxV - minV) * 1000;
         else if (delta !== null && delta < 1) deltaDisplay = delta * 1000;
@@ -1317,7 +1314,7 @@ _updateChartData(chart, timestamp, value) {
         const deltaEnt = c.cell_diff_sensor || '';
         const deltaClass = deltaEnt ? 'detail-item clickable' : 'detail-item';
         rightList.push(`<div class="${deltaClass}" data-entity="${deltaEnt}"><span class="detail-label">${this._localize('card.delta_cell_vol')} :</span><span class="detail-val-txt">${deltaStr}</span></div>`);
-        
+
         addIfConf(rightList, 'temp_mos_entity', 'card.mos_temp', '°C', true);
 
         const leftEl = this.shadowRoot.getElementById('d-list-left');
@@ -1337,11 +1334,11 @@ _updateChartData(chart, timestamp, value) {
         setTxt('d-delta-val', deltaDisplay !== null ? Math.round(deltaDisplay) : '--');
         setTxt('d-max-cell-idx', maxIdx !== -1 ? (c.cells[maxIdx].name || (maxIdx+1)) : '--');
         setTxt('d-min-cell-idx', minIdx !== -1 ? (c.cells[minIdx].name || (minIdx+1)) : '--');
-        
+
         const stChg  = this._getState(c.stat_charge_entity);
         const stDsg  = this._getState(c.stat_discharge_entity);
         const stBal  = this._getState(c.stat_balance_entity);
-        
+
         // --- CHECK GLOBAL BALANCE STATE ---
         const isBalGlobal = isStateOn(stBal, c.stat_balance_on);
 
@@ -1372,7 +1369,7 @@ _updateChartData(chart, timestamp, value) {
         setTxt('d-big-volt', (vTotal !== null ? vTotal.toFixed(2) : '--') + ' <span style="font-size:0.7em">V</span>');
         setTxt('d-big-curr', (iTotal !== null ? iTotal.toFixed(2) : '--') + ' <span style="font-size:0.7em">A</span>');
         setTxt('d-big-watt', (pTotal !== null ? pTotal.toFixed(2) : '--') + ' <span style="font-size:0.7em">W</span>');
-        
+
         const wColor = (pTotal > 0) ? '#43a047' : ((pTotal < 0) ? '#03a9f4' : 'var(--secondary-text-color)');
         setStyle('d-big-watt', 'color', wColor);
         setStyle('d-big-curr', 'color', wColor);
@@ -1383,41 +1380,41 @@ _updateChartData(chart, timestamp, value) {
         const listContainer = this.shadowRoot.getElementById('d-cell-list');
         if (listContainer) {
             let cellListHtml = [[], []];
-            
+
             // --- Generate HTML List (Hybrid Logic) ---
             c.cells.forEach((cell, i) => {
                 const v = this._parseNumber(cell.entity);
                 if (v !== null) {
                     const val = (v > 80) ? v / 1000 : v;
                     const colIdx = i < Math.ceil(c.cells.length/2) ? 0 : 1;
-                    
+
                     // --- HYBRID BALANCING LOGIC START ---
                     let isCellBalancing = false;
-                    
+
                     if (cell.balance_entity) {
                         const bState = this._getState(cell.balance_entity);
                         isCellBalancing = isStateOn(bState); 
                     } else {
                         isCellBalancing = isBalGlobal && (i === maxIdx || i === minIdx);
                     }
-                    
+
                     let balText = 'bal. off';
                     let balStyle = ''; 
-                    
+
                     if (isCellBalancing) {
                         balText = 'bal. on';
                         balStyle = 'color: #4caf50; font-weight: bold;'; 
                     }
-                    
+
                     cellListHtml[colIdx].push(`<div class="cell-text-row clickable" data-entity="${cell.entity}"><span><span class="cell-num">${String(i+1).padStart(2,'0')}.</span><span class="cell-v">${val.toFixed(3)} V</span></span><span class="cell-bal" style="${balStyle}">${balText}</span></div>`);
                 }
             });
             listContainer.innerHTML = `<div class="cell-list-col">${cellListHtml[0].join('')}</div><div class="cell-list-col">${cellListHtml[1].join('')}</div>`;
         }
-        
+
         if (this.chartVoltage && vTotal !== null) { this._updateChartData(this.chartVoltage, Date.now(), vTotal); }
         if (this.chartDelta && deltaDisplay !== null) { this._updateChartData(this.chartDelta, Date.now(), deltaDisplay); }
-        
+
         if (c.show_standard_in_detail) {
             this._updateStandardValues();
         }
